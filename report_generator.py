@@ -9,21 +9,36 @@ from io import BytesIO
 from typing import List, Dict
 
 
-def create_link_paragraph(title: str, url: str, styles):
-    """Create a paragraph with title text and a clickable link"""
+def create_link_paragraph(title: str, url: str, styles, source: str = None, tier: str = None, coverage_type: str = None):
+    """Create a paragraph with title text, clickable link, and metadata"""
     # Create the content with the title text and link
     link_style = ParagraphStyle(
         'LinkStyle',
         parent=styles['Normal'],
         fontSize=10,
-        textColor=blue,
+        textColor=black,  # Keep title text black
         leftIndent=0,
         spaceBefore=6,
         spaceAfter=6
     )
     
-    # Format: Title text followed by clickable link
-    content = f'{title} <a href="{url}" color="blue">{url}</a>'
+    # Format: Title text (black) followed by clickable link (blue)
+    content = f'<font color="black">{title}</font> <a href="{url}" color="blue">{url}</a>'
+    
+    # Add metadata if available
+    metadata_parts = []
+    if source:
+        metadata_parts.append(f"Source: {source}")
+    if tier:
+        tier_display = tier.replace("-", " ").title()
+        metadata_parts.append(f"Tier: {tier_display}")
+    if coverage_type:
+        coverage_display = coverage_type.replace("_", " ").title()
+        metadata_parts.append(f"Coverage: {coverage_display}")
+    
+    if metadata_parts:
+        metadata_text = f'<font size="8" color="gray"><br/>({" | ".join(metadata_parts)})</font>'
+        content += metadata_text
     
     return Paragraph(content, link_style)
 
@@ -195,18 +210,57 @@ def create_report_from_json_file(json_file_path: str, output_path: str = None):
 
 
 if __name__ == "__main__":
-    # Example usage when run directly - generate report from JSON file
-    json_file = "example_report_data.json"
-    output_file = "sample_report.pdf"
+    # Example usage when run directly - generate report from RSS feed
+    import os
     
-    try:
-        result = create_report_from_json_file(json_file, output_file)
-        if result:
-            print(f"✓ Sample report generated successfully: {result}")
-        else:
-            print("✗ Failed to generate sample report")
-    except FileNotFoundError:
-        print(f"✗ JSON file not found: {json_file}")
-        print("Please ensure example_report_data.json exists in the current directory")
-    except Exception as e:
-        print(f"✗ Error generating sample report: {e}") 
+    print("🤖 RSS-Powered Sample Report Generator")
+    print("=" * 45)
+    
+    # Check for Google API key
+    if not os.getenv("GOOGLE_API_KEY"):
+        print("❌ GOOGLE_API_KEY environment variable not set")
+        print("   Get your API key from: https://aistudio.google.com/app/apikey")
+        print("   Then run: export GOOGLE_API_KEY='your-key-here'")
+        print("\n🔄 Falling back to static JSON example...")
+        
+        # Fallback to JSON file approach
+        json_file = "example_report_data.json"
+        output_file = "sample_report.pdf"
+        
+        try:
+            result = create_report_from_json_file(json_file, output_file)
+            if result:
+                print(f"✓ Sample report generated from JSON: {result}")
+            else:
+                print("✗ Failed to generate sample report")
+        except FileNotFoundError:
+            print(f"✗ JSON file not found: {json_file}")
+            print("Please ensure example_report_data.json exists in the current directory")
+        except Exception as e:
+            print(f"✗ Error generating sample report: {e}")
+    else:
+        # Use RSS agent to generate sample report
+        try:
+            from rss_agent import create_report_from_topic, build_google_news_rss_url
+            
+            topic = "Elon Musk"
+            print(f"📡 Fetching articles for topic: {topic}")
+            print(f"🔗 RSS URL: {build_google_news_rss_url(topic)}")
+            print("🔄 Processing with Gemini AI categorization...")
+            
+            # Generate report from topic
+            json_path, pdf_path = create_report_from_topic(
+                topic=topic,
+                max_articles=15,
+                subject_override=f"{topic} News Summary",
+                output_json="sample_rss_data.json",
+                output_pdf="sample_report.pdf"
+            )
+            
+            print(f"✅ RSS-powered sample report generated successfully!")
+            print(f"📄 JSON data: {json_path}")
+            print(f"📄 PDF report: {pdf_path}")
+            
+        except ImportError as e:
+            print(f"❌ Import error: {e}")
+            print("Please ensure all dependencies are installed: pip install -r requirements.txt")

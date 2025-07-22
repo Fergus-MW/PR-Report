@@ -4,7 +4,7 @@ Example script demonstrating RSS Agent usage for automatic report generation
 """
 
 import os
-from rss_agent import create_report_from_rss, ArticleCategorizer
+from rss_agent import create_report_from_topic, ArticleCategorizer, build_google_news_rss_url
 
 
 def main():
@@ -20,22 +20,22 @@ def main():
     print("🤖 RSS Agent Demo")
     print("=" * 50)
     
-    # Use Harry Styles Google News RSS feed
-    from rss_agent import RSS_URL
-    feed_name = "Harry Styles Google News"
-    rss_url = RSS_URL
+    # Use Harry Styles as example topic
+    topic = "Harry Styles"
+    feed_name = f"{topic} Google News"
+    rss_url = build_google_news_rss_url(topic)
     
     print(f"\n📡 Processing: {feed_name}")
     print(f"   URL: {rss_url}")
     print(f"   Max articles: 15")
     
     try:
-        # Method 1: Complete pipeline (RSS -> JSON -> PDF)
-        print("\n🔄 Method 1: Complete pipeline (RSS -> JSON -> PDF)")
-        json_path, pdf_path = create_report_from_rss(
-            rss_url=rss_url,
+        # Method 1: Complete pipeline (Topic -> RSS -> JSON -> PDF)
+        print("\n🔄 Method 1: Complete pipeline (Topic -> RSS -> JSON -> PDF)")
+        json_path, pdf_path = create_report_from_topic(
+            topic=topic,
             max_articles=15,
-            subject_override=f"{feed_name} Daily Summary",
+            subject_override=f"{topic} Daily Summary",
             output_json="example_rss_output.json",
             output_pdf="example_rss_report.pdf"
         )
@@ -44,13 +44,13 @@ def main():
         print(f"   📄 JSON: {json_path}")
         print(f"   📄 PDF: {pdf_path}")
         
-        # Method 2: Just process RSS to JSON (for inspection)
-        print("\n🔄 Method 2: RSS to JSON only")
+        # Method 2: Just process topic to JSON (for inspection)
+        print("\n🔄 Method 2: Topic to JSON only")
         agent = ArticleCategorizer()
-        data = agent.process_rss_to_json(
-            rss_url=rss_url,
+        data = agent.process_topic_to_json(
+            topic=topic,
             max_articles=10,
-            subject_override=f"{feed_name} Headlines"
+            subject_override=f"{topic} Headlines"
         )
         
         print(f"✅ Processed {len(data.get('sections', []))} sections:")
@@ -77,24 +77,24 @@ def test_multiple_feeds():
         print("❌ GOOGLE_API_KEY not set")
         return
     
-    from rss_agent import RSS_URL
-    feeds = [
-        ("Harry Styles News", RSS_URL),
-        ("Tech News", "https://feeds.feedburner.com/TechCrunch")
+    topics = [
+        "Harry Styles",
+        "artificial intelligence",
+        "climate change"
     ]
     
-    print("🔄 Testing multiple RSS feeds...")
+    print("🔄 Testing multiple topics...")
     
-    for name, url in feeds:
+    for topic in topics:
         try:
-            print(f"\nProcessing {name}...")
+            print(f"\nProcessing topic: {topic}...")
             agent = ArticleCategorizer()
-            data = agent.process_rss_to_json(url, max_articles=5)
+            data = agent.process_topic_to_json(topic, max_articles=5)
             
-            print(f"✅ {name}: {len(data['sections'])} sections")
+            print(f"✅ {topic}: {len(data['sections'])} sections")
             
         except Exception as e:
-            print(f"❌ {name} failed: {e}")
+            print(f"❌ {topic} failed: {e}")
 
 
 if __name__ == "__main__":

@@ -1,13 +1,12 @@
-# PDF Generation API
+# PR Coverage Report Generator
 
-A FastAPI service with multiple PDF generation capabilities.
+A FastAPI service that generates AI-powered PR coverage reports for any topic using Google News RSS feeds.
 
 ## Components
 
-1. **Main API** (`main.py`) - Consolidated API server
-2. **Report Generator 1** (`report_generator.py`) - Core logic for structured reports with links
-3. **RSS Agent** (`rss_agent.py`) - LangChain-powered agent for RSS feed processing
-4. **Future Report Generators** - Additional generators will be added as separate modules
+1. **Main API** (`main.py`) - Single endpoint API server
+2. **Report Generator** (`report_generator.py`) - Core logic for structured PDF reports with links
+3. **RSS Agent** (`rss_agent.py`) - LangChain-powered agent with Google Gemini for RSS processing and AI categorization
 
 ## Installation
 
@@ -15,6 +14,20 @@ A FastAPI service with multiple PDF generation capabilities.
 ```bash
 pip install -r requirements.txt
 ```
+
+## Cloud Deployment
+
+Deploy to Google Cloud Run using Cloud Build:
+
+```bash
+# Quick deployment
+./deploy.sh
+
+# Or manually
+gcloud builds submit --config cloudbuild.yaml
+```
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 
 2. Set up your Google API key (required for RSS agent):
 ```bash
@@ -37,297 +50,143 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 2. The API will be available at `http://localhost:8000`
 
-## API Endpoints
+## API Endpoint
 
-### String to PDF
+### POST /generate-report
 
-#### POST /generate-pdf
-
-Converts a string to a PDF document.
+Generates an AI-powered PR coverage report for any subject by automatically fetching and categorizing news articles.
 
 **Request Body:**
 ```json
 {
-    "text": "Your text content here",
-    "title": "Document Title (optional)"
-}
-```
-
-**Response:** PDF file (application/pdf)
-
-**Example using curl:**
-```bash
-curl -X POST "http://localhost:8000/generate-pdf" \
-     -H "Content-Type: application/json" \
-     -d '{"text": "Hello World!\nThis is a test document.", "title": "My Test Document"}' \
-     --output document.pdf
-```
-
-### Report Generator 1
-
-#### POST /generate-report-1
-
-Generates a structured report PDF with sections, subheadings, and clickable links (format matches example1.pdf).
-
-**Request Body (New format with sections):**
-```json
-{
-    "subject": "Report Title",
-    "sections": [
-        {
-            "heading": "Section Heading",
-            "items": [
-                {
-                    "title": "Item description",
-                    "link": "https://example.com"
-                }
-            ]
-        }
-    ],
-    "filename": "optional-filename.pdf"
-}
-```
-
-**Request Body (Legacy format):**
-```json
-{
-    "subject": "Report Title",
-    "items": [
-        {
-            "title": "Item description",
-            "link": "https://example.com"
-        }
-    ],
-    "filename": "optional-filename.pdf"
-}
-```
-
-**Response:** PDF file (application/pdf)
-
-#### POST /generate-report-1-from-json
-
-Generates a report from raw JSON data using Report Generator 1.
-
-**Request Body (New format with sections):**
-```json
-{
-    "subject": "Technology News Summary",
-    "sections": [
-        {
-            "heading": "AI & Technology",
-            "items": [
-                {
-                    "title": "Latest AI developments in healthcare sector",
-                    "link": "https://example.com/ai-healthcare"
-                },
-                {
-                    "title": "New breakthrough in quantum computing research",
-                    "link": "https://example.com/quantum-computing"
-                }
-            ]
-        },
-        {
-            "heading": "Market Analysis",
-            "items": [
-                {
-                    "title": "Tech market showing strong growth",
-                    "link": "https://example.com/market-analysis"
-                }
-            ]
-        }
-    ],
-    "filename": "tech-news-report.pdf"
-}
-```
-
-**Request Body (Legacy format):**
-```json
-{
-    "subject": "Technology News Summary",
-    "items": [
-        {
-            "title": "Latest AI developments in healthcare sector",
-            "link": "https://example.com/ai-healthcare"
-        },
-        {
-            "title": "New breakthrough in quantum computing research",
-            "link": "https://example.com/quantum-computing"
-        }
-    ],
-    "filename": "tech-news-report.pdf"
-}
-```
-
-**Example using curl:**
-```bash
-curl -X POST "http://localhost:8000/generate-report-1-from-json" \
-     -H "Content-Type: application/json" \
-     -d @example_report_data.json \
-     --output report.pdf
-```
-
-### RSS-Powered Report Generation
-
-#### POST /generate-report-from-rss
-
-Automatically generates a report from an RSS feed using AI categorization.
-
-**Request Body:**
-```json
-{
-    "rss_url": "https://news.google.com/rss/search?q=Harry%Styles&hl=en-US&gl=US&ceid=US:en",
-    "max_articles": 15,
-    "subject_override": "Harry Styles News Summary", 
-    "filename": "harry-styles-news-report.pdf",
-    "google_api_key": "your-api-key-here"
-}
-```
-
-**Response:** PDF file (application/pdf)
-
-#### POST /process-rss-to-json
-
-Processes RSS feed and returns categorized JSON without generating PDF.
-
-**Request Body:**
-```json
-{
-    "rss_url": "https://news.google.com/rss/search?q=Harry%Styles&hl=en-US&gl=US&ceid=US:en",
+    "subject": "Harry Styles",
     "max_articles": 20,
-    "subject_override": "Harry Styles News Roundup"
+    "filename": "harry-styles-coverage.pdf",
+    "language": "en-US",
+    "country": "US"
 }
 ```
 
-**Response:** JSON structure with categorized articles
+**Response:** PDF file (application/pdf) with categorized news coverage
 
 **Example using curl:**
 ```bash
-# Generate PDF directly from RSS (defaults to Harry Styles news)
-curl -X POST "http://localhost:8000/generate-report-from-rss" \
+# Generate Harry Styles coverage report
+curl -X POST "http://localhost:8000/generate-report" \
      -H "Content-Type: application/json" \
-     -d '{"max_articles": 15}' \
-     --output harry-styles-report.pdf
+     -d '{"subject": "Harry Styles", "max_articles": 15}' \
+     --output harry-styles-coverage.pdf
 
-# Get JSON structure only
-curl -X POST "http://localhost:8000/process-rss-to-json" \
+# Generate AI technology coverage report
+curl -X POST "http://localhost:8000/generate-report" \
      -H "Content-Type: application/json" \
-     -d '{"max_articles": 10}'
+     -d '{"subject": "artificial intelligence", "max_articles": 25}' \
+     --output ai-coverage.pdf
+
+# Generate Apple Inc coverage report for UK market
+curl -X POST "http://localhost:8000/generate-report" \
+     -H "Content-Type: application/json" \
+     -d '{"subject": "Apple Inc", "language": "en-GB", "country": "GB"}' \
+     --output apple-uk-coverage.pdf
 ```
 
 **Example using Python requests:**
 ```python
 import requests
 
-# For string-to-PDF
+# Generate Harry Styles coverage report
 response = requests.post(
-    "http://localhost:8000/generate-pdf",
+    "http://localhost:8000/generate-report",
     json={
-        "text": "Hello World!\nThis is a test document with multiple lines.",
-        "title": "My Generated Document"
+        "subject": "Harry Styles",
+        "max_articles": 20,
+        "filename": "harry-styles-coverage.pdf"
     }
 )
 
 if response.status_code == 200:
-    with open("generated_document.pdf", "wb") as f:
+    with open("harry-styles-coverage.pdf", "wb") as f:
         f.write(response.content)
-    print("PDF generated successfully!")
+    print("Coverage report generated successfully!")
 
-# For report generator 1 (new format with sections)
-report_data = {
-    "subject": "Weekly News Report",
-    "sections": [
-        {
-            "heading": "Technology News",
-            "items": [
-                {
-                    "title": "Breaking news: Technology advancement in AI",
-                    "link": "https://example.com/ai-news"
-                }
-            ]
-        },
-        {
-            "heading": "Market Analysis",
-            "items": [
-                {
-                    "title": "Market trends show positive growth",
-                    "link": "https://example.com/market-trends"
-                }
-            ]
-        }
-    ]
-}
-
+# Generate tech company coverage report
 response = requests.post(
-    "http://localhost:8000/generate-report-1",
-    json=report_data
+    "http://localhost:8000/generate-report",
+    json={
+        "subject": "Tesla",
+        "max_articles": 15,
+        "language": "en-US",
+        "country": "US"
+    }
 )
 
 if response.status_code == 200:
-    with open("weekly_report.pdf", "wb") as f:
+    with open("tesla-coverage.pdf", "wb") as f:
         f.write(response.content)
-    print("Report generated successfully!")
+    print("Tesla coverage report generated!")
 
-# For RSS-powered reports (defaults to Harry Styles news)
-rss_data = {
-    "max_articles": 15,
-    "subject_override": "Harry Styles News Summary"
-}
-
+# Generate international coverage report
 response = requests.post(
-    "http://localhost:8000/generate-report-from-rss",
-    json=rss_data
+    "http://localhost:8000/generate-report",
+    json={
+        "subject": "climate change",
+        "max_articles": 30,
+        "language": "en-GB",
+        "country": "GB"
+    }
 )
 
 if response.status_code == 200:
-    with open("harry_styles_report.pdf", "wb") as f:
+    with open("climate-coverage-uk.pdf", "wb") as f:
         f.write(response.content)
-    print("RSS report generated successfully!")
+    print("Climate change coverage report generated!")
 ```
 
 ### Using Direct Functions
 
-**From JSON files:**
+**Generate coverage reports:**
 ```python
-from report_generator import create_report_from_json_file
+from rss_agent import create_report_from_topic
 
-# Generate report from JSON file
-create_report_from_json_file("example_report_data.json", "my_report.pdf")
-```
-
-**From RSS feeds:**
-```python
-from rss_agent import create_report_from_rss
-
-# Generate report directly from RSS feed (defaults to Harry Styles news)
-json_path, pdf_path = create_report_from_rss(
+# Generate Harry Styles coverage report
+json_path, pdf_path = create_report_from_topic(
+    topic="Harry Styles",
     max_articles=15,
-    subject_override="Harry Styles News Summary"
+    subject_override="Harry Styles Coverage Report"
+)
+print(f"Generated: {pdf_path}")
+
+# Generate technology coverage report
+json_path, pdf_path = create_report_from_topic(
+    topic="artificial intelligence",
+    max_articles=25,
+    subject_override="AI Technology Coverage"
 )
 print(f"Generated: {pdf_path}")
 ```
 
-**RSS processing only:**
+**Process topics to JSON only:**
 ```python
 from rss_agent import ArticleCategorizer
 
-# Just process RSS to JSON (defaults to Harry Styles news)
+# Process any topic to categorized JSON
 agent = ArticleCategorizer()
-data = agent.process_rss_to_json(
-    rss_url="https://news.google.com/rss/search?q=Harry%Styles&hl=en-US&gl=US&ceid=US:en",
+data = agent.process_topic_to_json(
+    topic="space exploration",
     max_articles=10
 )
 print(f"Categorized into {len(data['sections'])} sections")
 ```
 
-### Common Endpoints
+### Additional Endpoints
 
 #### GET /
 
-Returns API information and available endpoints.
+Returns API information and supported topics.
 
 #### GET /health
 
-Health check endpoint showing status of all services.
+Health check endpoint showing service status.
 
 ## Interactive Documentation
 
@@ -337,48 +196,36 @@ When the server is running, you can access the interactive API documentation at:
 
 ## Features
 
-### String to PDF
-- Converts plain text to PDF
-- Supports multi-line text (separated by newlines)
-- Optional document title
-- Returns PDF as downloadable file
+### AI-Powered Coverage Analysis
+- **Automatic topic processing** - Enter any subject and get comprehensive coverage
+- **Google News integration** - Fetches latest articles from Google News RSS
+- **Smart categorization** using Google Gemini 2.0 Flash AI
+- **Media tier classification** - Distinguishes top-tier, mid-tier, and low-tier sources
+- **Coverage differentiation** - Identifies headline coverage vs mentions
+- **Multi-language support** - Generate reports in different languages/regions
 
-### Report Generator 1
-- Generates structured reports with sections and subheadings
-- Supports clickable links in PDF output
-- Mimics the format of example1.pdf with subheadings
-- New format: sections with headings and items
-- Legacy format: direct items list (backward compatible)
-- Customizable filenames
-- Professional formatting with proper spacing
-- Blue clickable links in PDF output
-
-### RSS Agent (AI-Powered)
-- **Automatic categorization** using LangChain and Google Gemini 2.0 Flash
-- **RSS feed processing** with feedparser
-- **Smart section creation** based on article content
-- **Configured for Harry Styles news** from Google News RSS
-- **Fallback handling** if AI categorization fails
-- **Direct PDF generation** from RSS feeds
-- **JSON export** for inspection and customization
+### Professional PDF Output
+- **Structured sections** with clear headings and subheadings
+- **Clickable links** to original articles (blue links in PDF)
+- **Source attribution** with media tier and coverage type metadata
+- **Professional formatting** with proper spacing and typography
+- **Custom filenames** and automatic timestamping
 
 ### System Architecture
-- **Modular design** allowing easy addition of new report generators
-- **Each report generator** has its own routes (`/generate-report-1`, `/generate-report-2`, etc.)
-- **RSS integration** with dedicated endpoints for feed processing
-- **Consolidated API** on single port (8000)
-- **Separate logic modules** for each generator type
-- **LangChain + Google Gemini** for AI-powered content categorization
+- **Single endpoint design** - One simple route for all coverage reports
+- **Dynamic RSS URL generation** - Builds Google News RSS URLs for any topic
+- **AI-powered processing** using LangChain + Google Gemini 2.0 Flash
+- **Modular components** - Separate RSS agent and report generator modules
+- **Cloud-ready** with Docker and Google Cloud Run deployment
+- **Environment variable configuration** for API keys and settings
 
-## Common Features
-- Health check endpoint showing all service statuses
-- Interactive API documentation
-- Comprehensive error handling
-- FastAPI framework with automatic validation
-- Extensible architecture for multiple report types
-- AI-powered content categorization with Google Gemini 2.0 Flash
-- RSS feed integration (Harry Styles Google News by default)
-- Environment variable configuration
+## Technical Features
+- **FastAPI framework** with automatic validation and documentation
+- **Comprehensive error handling** with detailed error messages
+- **Automatic cleanup** of temporary files
+- **Health check endpoint** for monitoring
+- **Interactive API documentation** at `/docs`
+- **Multi-region support** with language and country parameters
 
 ## Example Usage
 
@@ -396,19 +243,30 @@ When the server is running, you can access the interactive API documentation at:
 
 3. **Or use the API:**
    ```bash
-   curl -X POST "http://localhost:8000/generate-report-from-rss" \
+   curl -X POST "http://localhost:8000/generate-report" \
         -H "Content-Type: application/json" \
-        -d '{"max_articles": 15}' \
-        --output harry-styles-news-report.pdf
+        -d '{"subject": "Harry Styles", "max_articles": 15}' \
+        --output harry-styles-coverage.pdf
    ```
 
-### Default RSS Feed
+### Supported Topics
 
-- **Harry Styles Google News**: `https://news.google.com/rss/search?q=Harry%Styles&hl=en-US&gl=US&ceid=US:en`
+The service can generate coverage reports for any topic that appears in Google News:
 
-### Other Compatible RSS Feeds
+**People & Celebrities:**
+- `Harry Styles`, `Taylor Swift`, `Elon Musk`, `Joe Biden`
 
-- **TechCrunch**: `https://feeds.feedburner.com/TechCrunch`
-- **BBC News**: `https://feeds.bbci.co.uk/news/rss.xml`
-- **CNN**: `https://rss.cnn.com/rss/edition.rss`
-- **Reuters**: `https://feeds.reuters.com/Reuters/worldNews` # PR-Report
+**Companies & Brands:**
+- `Apple`, `Tesla`, `Microsoft`, `Netflix`, `Google`
+
+**Technology:**
+- `artificial intelligence`, `blockchain`, `quantum computing`, `ChatGPT`
+
+**Events & Trends:**
+- `COP28`, `Olympics 2024`, `World Cup`, `climate change`
+
+**Geographic Topics:**
+- `London news`, `California wildfires`, `Japan earthquake`
+
+**Industries:**
+- `renewable energy`, `electric vehicles`, `space exploration`
