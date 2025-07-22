@@ -370,7 +370,7 @@ def create_report_from_rss(rss_url: str = None, max_articles: int = 30, subject_
                           output_json: str = None, output_pdf: str = None, 
                           google_api_key: str = None) -> tuple[str, str]:
     """
-    High-level function to create a report from RSS feed
+    High-level function to create a report from RSS feed (writes to disk)
     
     Args:
         rss_url: RSS feed URL
@@ -416,7 +416,7 @@ def create_report_from_topic(topic: str, max_articles: int = 30, subject_overrid
                             google_api_key: str = None, language: str = "en-US", 
                             country: str = "US") -> tuple[str, str]:
     """
-    High-level function to create a report from a search topic
+    High-level function to create a report from a search topic (writes to disk)
     
     Args:
         topic: Search topic (e.g., "Harry Styles", "artificial intelligence")
@@ -457,6 +457,40 @@ def create_report_from_topic(topic: str, max_articles: int = 30, subject_overrid
         f.write(pdf_bytes)
     
     return json_path, output_pdf
+
+
+def create_report_from_topic_memory(topic: str, max_articles: int = 30, subject_override: str = None,
+                                   google_api_key: str = None, language: str = "en-US", 
+                                   country: str = "US") -> tuple[dict, bytes]:
+    """
+    In-memory function to create a report from a search topic (Cloud Run compatible)
+    
+    Args:
+        topic: Search topic (e.g., "Harry Styles", "artificial intelligence")
+        max_articles: Maximum articles to process
+        subject_override: Custom subject line (defaults to "{topic} News Summary")
+        google_api_key: Google API key
+        language: Language code (default: en-US)
+        country: Country code (default: US)
+        
+    Returns:
+        Tuple of (json_data_dict, pdf_bytes)
+    """
+    from report_generator import generate_report_pdf
+    
+    # Initialize the agent
+    agent = ArticleCategorizer(google_api_key)
+    
+    # Process topic to JSON (in memory)
+    data = agent.process_topic_to_json(topic, max_articles, subject_override, language, country)
+    
+    # Generate PDF (in memory)
+    pdf_bytes = generate_report_pdf(
+        subject=data["subject"],
+        sections=data["sections"]
+    )
+    
+    return data, pdf_bytes
 
 
 if __name__ == "__main__":

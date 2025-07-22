@@ -5,7 +5,7 @@ from datetime import datetime
 import uvicorn
 
 # Import RSS agent
-from rss_agent import create_report_from_topic
+from rss_agent import create_report_from_topic_memory
 
 app = FastAPI(title="PR Coverage Report Generator", description="Generate PR coverage reports from any topic")
 
@@ -30,8 +30,8 @@ async def generate_report(request: ReportRequest):
         PDF file as bytes with categorized news coverage
     """
     try:
-        # Generate report from topic using RSS agent
-        json_path, pdf_path = create_report_from_topic(
+        # Generate report from topic using RSS agent (in-memory for Cloud Run)
+        json_data, pdf_bytes = create_report_from_topic_memory(
             topic=request.subject,
             max_articles=request.max_articles,
             subject_override=f"{request.subject} Coverage Report",
@@ -39,18 +39,6 @@ async def generate_report(request: ReportRequest):
             language=request.language,
             country=request.country
         )
-        
-        # Read the generated PDF
-        with open(pdf_path, 'rb') as f:
-            pdf_bytes = f.read()
-        
-        # Clean up temporary files
-        import os
-        try:
-            os.remove(json_path)
-            os.remove(pdf_path)
-        except:
-            pass  # Don't fail if cleanup fails
         
         # Generate filename
         filename = request.filename or f"{request.subject.replace(' ', '_')}-coverage-{datetime.now().strftime('%Y%m%d-%H%M%S')}.pdf"
