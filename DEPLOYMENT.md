@@ -137,7 +137,11 @@ gcloud run services describe pr-coverage-gen \
 
 Test the deployment:
 ```bash
+# Health check
 curl https://your-service-url/health
+
+# API info (shows available endpoints)
+curl https://your-service-url/
 ```
 
 ### Logs
@@ -151,9 +155,9 @@ gcloud logging read "resource.type=cloud_run_revision AND resource.labels.servic
 
 ## API Usage
 
-Once deployed, you can generate coverage reports for any topic:
+Once deployed, you can generate coverage reports and analytics for any topic:
 
-### Generate Coverage Reports
+### Generate Coverage Reports (PDF)
 ```bash
 # Harry Styles coverage report
 curl -X POST "https://your-service-url/generate-report" \
@@ -172,6 +176,27 @@ curl -X POST "https://your-service-url/generate-report" \
   -H "Content-Type: application/json" \
   -d '{"subject": "Tesla", "language": "en-GB", "country": "GB"}' \
   --output tesla-uk-coverage.pdf
+```
+
+### Generate Analytics Data (JSON)
+```bash
+# Harry Styles analytics (US-only)
+curl -X POST "https://your-service-url/analytics" \
+  -H "Content-Type: application/json" \
+  -d '{"clientId": "harry-styles", "includeInternational": false, "date": "2025-01-22"}' \
+  | jq '.report.summary'
+
+# International Tesla analytics
+curl -X POST "https://your-service-url/analytics" \
+  -H "Content-Type: application/json" \
+  -d '{"clientId": "tesla", "includeInternational": true, "date": "2025-01-22"}' \
+  | jq '.report.articles[0:3]'
+
+# AI technology tier breakdown
+curl -X POST "https://your-service-url/analytics" \
+  -H "Content-Type: application/json" \
+  -d '{"clientId": "artificial-intelligence", "includeInternational": false, "date": "2025-01-22"}' \
+  | jq '.report.summary.sentimentBreakdown'
 ```
 
 ## Troubleshooting

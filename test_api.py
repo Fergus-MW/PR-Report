@@ -15,7 +15,7 @@ def test_api_endpoint():
     print("=" * 40)
     
     # API endpoint
-    url = "http://localhost:8000/generate-report"
+    url = "https://pr-coverage-gen-534113739138.europe-west1.run.app/generate-report"
     
     # Test request data
     request_data = {
@@ -51,18 +51,22 @@ def test_api_endpoint():
         if response.status_code == 200:
             # Check if it's a PDF
             if response.headers.get('content-type') == 'application/pdf':
-                # Save the PDF
-                output_file = "api_test_report.pdf"
+                # Save the PDF with timestamp for permanent keeping
+                timestamp = time.strftime('%Y%m%d-%H%M%S')
+                output_file = f"api_test_report_{timestamp}.pdf"
                 with open(output_file, 'wb') as f:
                     f.write(response.content)
                 
                 print(f"✅ API test successful!")
                 print(f"  📄 PDF saved as: {output_file}")
                 print(f"  📊 File size: {len(response.content)} bytes")
+                print(f"  🔗 You can open the PDF to view the generated report")
                 
                 # Check if file exists and has content
                 if Path(output_file).exists() and Path(output_file).stat().st_size > 1000:
                     print(f"  ✓ PDF file created successfully and has content")
+                    # Store filename for later reference
+                    test_api_endpoint.saved_file = output_file
                     return True
                 else:
                     print(f"  ❌ PDF file is too small or empty")
@@ -93,7 +97,7 @@ def test_health_endpoint():
     print("=" * 40)
     
     try:
-        response = requests.get("http://localhost:8000/health", timeout=5)
+        response = requests.get("https://pr-coverage-gen-534113739138.europe-west1.run.app/health", timeout=5)
         
         if response.status_code == 200:
             print("✅ Health endpoint working")
@@ -121,7 +125,7 @@ def test_docs_endpoint():
     print("=" * 40)
     
     try:
-        response = requests.get("http://localhost:8000/docs", timeout=5)
+        response = requests.get("https://pr-coverage-gen-534113739138.europe-west1.run.app/docs", timeout=5)
         
         if response.status_code == 200:
             print("✅ Documentation endpoint working")
@@ -183,7 +187,7 @@ def main():
         print("🎉 All API tests passed!")
         print("\n✅ Your RSS Agent API is working correctly!")
         print("\nNext steps:")
-        print("1. Open browser: http://localhost:8000/docs")
+        print("1. Open browser: https://pr-coverage-gen-534113739138.europe-west1.run.app/docs")
         print("2. Try different topics in the API")
         print("3. Test with larger max_articles values")
     else:
@@ -193,14 +197,12 @@ def main():
         print("2. Check GOOGLE_API_KEY is set")
         print("3. Verify internet connection")
     
-    # Clean up test file
-    test_file = Path("api_test_report.pdf")
-    if test_file.exists():
-        try:
-            test_file.unlink()
-            print(f"\n🧹 Cleaned up test file: api_test_report.pdf")
-        except:
-            pass
+    # Show saved file location (don't clean up - user can inspect the PDF)
+    if hasattr(test_api_endpoint, 'saved_file'):
+        print(f"\n📄 Test PDF report saved permanently: {test_api_endpoint.saved_file}")
+        print(f"   You can open this file to view the generated coverage report")
+    else:
+        print(f"\n💾 No PDF file was generated during testing")
 
 if __name__ == "__main__":
     main() 

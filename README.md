@@ -50,7 +50,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 2. The API will be available at `http://localhost:8000`
 
-## API Endpoint
+## API Endpoints
 
 ### POST /generate-report
 
@@ -176,6 +176,134 @@ data = agent.process_topic_to_json(
     max_articles=10
 )
 print(f"Categorized into {len(data['sections'])} sections")
+```
+
+### POST /analytics
+
+Generates structured JSON analytics data with detailed metrics for any subject. Returns comprehensive analytics including tier counts, sentiment analysis, and article metadata instead of a PDF report.
+
+**Request Body:**
+```json
+{
+    "clientId": "harry-styles",
+    "includeInternational": false,
+    "date": "2025-01-22"
+}
+```
+
+**Response Body:**
+```json
+{
+    "report": {
+        "clientId": "harry-styles",
+        "clientName": "Harry Styles",
+        "date": "2025-01-22",
+        "generatedAt": "2025-01-22T15:00:00Z",
+        "summary": {
+            "topTierCount": 3,
+            "midTierCount": 8,
+            "blogCount": 12,
+            "totalMentions": 23,
+            "sentimentBreakdown": {
+                "positive": 15,
+                "neutral": 6,
+                "negative": 2
+            }
+        },
+        "articles": [
+            {
+                "id": 1,
+                "title": "Harry Styles Announces New Tour Dates",
+                "url": "https://people.com/harry-styles-tour-2025",
+                "outlet": "People",
+                "tier": "Mid",
+                "focusType": "Headline",
+                "estViews": 100000,
+                "publishedAt": "2025-01-22T14:30:00Z",
+                "sentiment": "positive",
+                "summary": "Pop star announces highly anticipated world tour...",
+                "includedInReport": true
+            }
+        ]
+    }
+}
+```
+
+**Parameters:**
+- `clientId`: Subject identifier (kebab-case format like "harry-styles")
+- `includeInternational`: Boolean flag for international vs US-only coverage
+- `date`: Report date in YYYY-MM-DD format
+
+**Analytics Features:**
+- **Tier Classification**: Automatically categorizes outlets as Top/Mid/Blog tier
+- **Sentiment Analysis**: Keyword-based sentiment detection (positive/neutral/negative)
+- **Focus Analysis**: Determines if coverage is "Headline" focus vs "Mention"
+- **View Estimation**: Estimates reach based on outlet tier (500K/100K/25K)
+- **Auto-calculated Summaries**: Tier counts, total mentions, sentiment breakdown
+
+**Example using curl:**
+```bash
+# Generate analytics for Harry Styles (US-only)
+curl -X POST "http://localhost:8000/analytics" \
+     -H "Content-Type: application/json" \
+     -d '{"clientId": "harry-styles", "includeInternational": false, "date": "2025-01-22"}' \
+     | jq '.'
+
+# Generate international analytics for Apple Inc
+curl -X POST "http://localhost:8000/analytics" \
+     -H "Content-Type: application/json" \
+     -d '{"clientId": "apple-inc", "includeInternational": true, "date": "2025-01-22"}' \
+     | jq '.'
+
+# Generate analytics for AI technology coverage
+curl -X POST "http://localhost:8000/analytics" \
+     -H "Content-Type: application/json" \
+     -d '{"clientId": "artificial-intelligence", "includeInternational": false, "date": "2025-01-22"}' \
+     | jq '.report.summary'
+```
+
+**Example using Python requests:**
+```python
+import requests
+import json
+
+# Generate analytics for Tesla
+response = requests.post(
+    "http://localhost:8000/analytics",
+    json={
+        "clientId": "tesla",
+        "includeInternational": false,
+        "date": "2025-01-22"
+    }
+)
+
+if response.status_code == 200:
+    analytics = response.json()
+    summary = analytics["report"]["summary"]
+    
+    print(f"Total mentions: {summary['totalMentions']}")
+    print(f"Top tier: {summary['topTierCount']}")
+    print(f"Mid tier: {summary['midTierCount']}")
+    print(f"Blog tier: {summary['blogCount']}")
+    print(f"Sentiment: {summary['sentimentBreakdown']}")
+    
+    # Process individual articles
+    for article in analytics["report"]["articles"][:5]:
+        print(f"- {article['title']} ({article['outlet']}, {article['tier']} tier)")
+
+# Generate international coverage analytics
+response = requests.post(
+    "http://localhost:8000/analytics",
+    json={
+        "clientId": "climate-change",
+        "includeInternational": true,
+        "date": "2025-01-22"
+    }
+)
+
+if response.status_code == 200:
+    data = response.json()
+    print(f"International coverage: {data['report']['summary']['totalMentions']} articles")
 ```
 
 ### Additional Endpoints

@@ -163,6 +163,7 @@ cython_debug/
 
 # Generated files
 *.pdf
+!api_test_report_*.pdf  # Keep test PDFs for inspection
 *.json
 !example_report_data.json
 !requirements.txt

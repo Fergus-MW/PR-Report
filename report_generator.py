@@ -22,8 +22,8 @@ def create_link_paragraph(title: str, url: str, styles, source: str = None, tier
         spaceAfter=6
     )
     
-    # Format: Title text (black) followed by clickable link (blue)
-    content = f'<font color="black">{title}</font> <a href="{url}" color="blue">{url}</a>'
+    # Format: Title text (black) followed by clickable "link" text (blue)
+    content = f'<font color="black">{title}</font> <a href="{url}" color="blue">link</a>'
     
     # Add metadata if available
     metadata_parts = []
